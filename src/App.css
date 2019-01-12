@@ -15,8 +15,9 @@
 }
 
 .columns {
+  padding: 0 50px;
   width: 100%;
-  justify-content: space-around;
+  justify-content: space-between;
 	flex-direction: row;
 	display: flex;
 }

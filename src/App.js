@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 
 import { websocketConnect, websocketDisconnect } from './models'
 
+import Ticker from './components/Ticker'
 import Trades from './components/Trades'
 import Books from './components/Books'
 
@@ -26,6 +27,7 @@ class App extends Component {
         <div className="columns">
           <Trades />
           <Books />
+          <Ticker />
         </div>
 
       </div>

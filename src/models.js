@@ -29,16 +29,6 @@ export const subscribeTrades = () => {
   }
 }
 
-export const unsubscribe = chanId => {
-  return {
-    type: WEBSOCKET_SEND,
-    payload: {
-      event: 'unsubscribe',
-      chanId,
-    },
-  }
-}
-
 export const subscribeBooks = (prec = 'P0') => {
   return {
     type: WEBSOCKET_SEND,
@@ -48,6 +38,27 @@ export const subscribeBooks = (prec = 'P0') => {
       symbol: 'tBTCUSD',
       freq: 'F1',
       prec,
+    },
+  }
+}
+
+export const subscribeTicker = () => {
+  return {
+    type: WEBSOCKET_SEND,
+    payload: {
+      event: 'subscribe',
+      channel: 'ticker',
+      symbol: 'tBTCUSD',
+    },
+  }
+}
+
+export const unsubscribe = chanId => {
+  return {
+    type: WEBSOCKET_SEND,
+    payload: {
+      event: 'unsubscribe',
+      chanId,
     },
   }
 }
@@ -97,6 +108,14 @@ export const reducer = (state = initialState, action) => {
                 ...(state.data[data[0]] ? state.data[data[0]] : []),
                 [`${data[1][0]}`]: data[1].slice(1),
               },
+            },
+          }
+        } else if (data.length === 2 && data[1].length === 10) { // updated ticker data, update
+          return {
+            ...state,
+            data: {
+              ...state.data,
+              [`${data[0]}`]: data[1],
             },
           }
         }
