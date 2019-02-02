@@ -27,6 +27,7 @@ class Ticker extends Component {
         <Table celled inverted compact="very" style={{ fontSize: '11px' }}>
           <Table.Header>
             <Table.Row>
+              <Table.HeaderCell />
               <Table.HeaderCell>Price</Table.HeaderCell>
               <Table.HeaderCell>Daily change</Table.HeaderCell>
               <Table.HeaderCell>Vol BTC</Table.HeaderCell>
@@ -38,6 +39,7 @@ class Ticker extends Component {
 
           <Table.Body>
             <Table.Row>
+              <Table.Cell><Icon name="bitcoin" size="big" /></Table.Cell>
               <Table.Cell>
                 {data[6].toLocaleString(undefined, { minimumFractionDigits: 1 })}</Table.Cell>
               <Table.Cell
