@@ -19,9 +19,6 @@ class Trades extends Component {
     if (!this.props.data) {
       return null
     }
-    const data = Object.keys(this.props.data)
-      .sort((a, b) => this.props.data[b][0] - this.props.data[a][0])
-      .slice(0, 29)
     return (
       <div>
         <h4>Trades</h4>
@@ -36,21 +33,20 @@ class Trades extends Component {
           </Table.Header>
 
           <Table.Body>
-            {data.map(i => {
-              const item = this.props.data[i]
-              const amount = item[1].toFixed(4)
+            {this.props.data.map(i => {
+              const amount = i[2].toFixed(4)
               const negative = amount < 0
               return (
-                <Table.Row key={i}>
+                <Table.Row key={i[0]}>
                   <Table.Cell>
                     <Icon
                       name={negative ? 'chevron down' : 'chevron up'}
                       color={negative ? 'red' : 'green'}
                     />
                   </Table.Cell>
-                  <Table.Cell>{String(new Date(item[0])).substr(16, 8)}
+                  <Table.Cell>{String(new Date(i[1])).substr(16, 8)}
                   </Table.Cell>
-                  <Table.Cell>{item[2].toFixed(1)}</Table.Cell>
+                  <Table.Cell>{i[3].toFixed(1)}</Table.Cell>
                   <Table.Cell>{Math.abs(amount)}</Table.Cell>
                 </Table.Row>
               )

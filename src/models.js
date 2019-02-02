@@ -1,3 +1,4 @@
+import arrayToMap from './util/array-to-map'
 import {
   WEBSOCKET_CONNECT,
   WEBSOCKET_DISCONNECT,
@@ -84,55 +85,89 @@ export const reducer = (state = initialState, action) => {
   switch (action.type) {
     case WEBSOCKET_MESSAGE:
       const data = JSON.parse(action.payload.data, 3)
+      const channel = data[0]
       if (Array.isArray(data)) {
-        if (data[1] === 'hb') { // hearteat, just skip
+        if (data[1] === 'hb') { // hearteat
           return {
             ...state,
             alive: true,
           }
-        } else if (typeof data[1] === 'object' && data[1].length >= 30) { // initial data, populate
+        } else if (Array.isArray(data[1]) && Array.isArray(data[1][0])) { // received array of arrays = initial data for trades or books, populate
+          if (channel === state.channels.book) {
+            const bids = data[1].filter(i => i[2] > 0)
+            const asks = data[1].filter(i => i[2] < 0)
+            return {
+              ...state,
+              alive: true,
+              data: {
+                ...state.data,
+                [`${channel}`]: {
+                  bids: arrayToMap(bids),
+                  asks: arrayToMap(asks),
+                },
+              },
+            }
+          } else {
+            return {
+              ...state,
+              alive: true,
+              data: {
+                ...state.data,
+                [`${channel}`]: data[1],
+              },
+            }
+          }
+        } else if (channel === state.channels.trades && data[1] === 'tu') { // updated trades data, update
+          const newData = state.data[`${channel}`].slice(0, -1)
+          newData.unshift(data[2])
           return {
             ...state,
             alive: true,
             data: {
               ...state.data,
-              [`${data[0]}`]: data[1].reduce((acc, cur) => {
-                acc[cur[0]] = cur.slice(1)
-                return acc
-              }, {}),
+              [`${channel}`]: newData,
             },
           }
-        } else if (data[1] === 'tu') { // updated trades data, update
+        } else if (channel === state.channels.book) { // updated books data, update
+          const count = data[1][1]
+          const amount = data[1][2]
+          const key = data[1][0]
+
+          const bids = new Map(state.data[`${channel}`].bids)
+          const asks = new Map(state.data[`${channel}`].asks)
+
+          if (count > 0) {
+            if (amount > 0) {
+              bids.set(key, data[1].slice(1))
+            } else if (amount < 0) {
+              asks.set(key, data[1].slice(1))
+            }
+          } else if (count === 0) {
+            if (amount === 1) {
+              bids.delete(key)
+            } else if (amount === -1) {
+              asks.delete(key)
+            }
+          }
+
           return {
             ...state,
             alive: true,
             data: {
               ...state.data,
-              [`${data[0]}`]: {
-                ...(state.data[data[0]] ? state.data[data[0]] : []),
-                [`${data[2][0]}`]: data[2].slice(1),
+              [`${channel}`]: {
+                bids,
+                asks,
               },
             },
           }
-        } else if (data.length === 2 && data[1].length === 3) { // updated books data, update
+        } else if (channel === state.channels.ticker) { // updated ticker data, update
           return {
             ...state,
             alive: true,
             data: {
               ...state.data,
-              [`${data[0]}`]: {
-                ...(state.data[data[0]] ? state.data[data[0]] : []),
-                [`${data[1][0]}`]: data[1].slice(1),
-              },
-            },
-          }
-        } else if (data.length === 2 && data[1].length === 10) { // updated ticker data, update
-          return {
-            ...state,
-            alive: true,
-            data: {
-              ...state.data,
-              [`${data[0]}`]: data[1],
+              [`${channel}`]: data[1],
             },
           }
         }

@@ -41,12 +41,11 @@ class Trades extends Component {
     }
   }
   render () {
-    if (!this.props.data) {
+    if (!this.props.bids || !this.props.asks) {
       return null
     }
-    const data = Object.keys(this.props.data)
-      .sort((a, b) => b - a)
-      .slice(0, 29)
+    const bids = [...this.props.bids].sort((a, b) => b[0] - a[0])
+    const asks = [...this.props.asks].sort((a, b) => a[0] - b[0])
     return (
       <div>
         <h4>Books</h4>
@@ -57,42 +56,88 @@ class Trades extends Component {
           value={this.props.precision}
           onChange={(e, data) => this.changePrecision(data.value) }
         />
-        <Table celled inverted compact="very" style={{ fontSize: '11px' }}>
-          <Table.Header>
-            <Table.Row>
-              <Table.HeaderCell>Count</Table.HeaderCell>
-              <Table.HeaderCell>Amount</Table.HeaderCell>
-              <Table.HeaderCell>Price</Table.HeaderCell>
-            </Table.Row>
-          </Table.Header>
+        <div style={{ display: 'flex' }}>
+          <Table celled inverted compact="very" style={{ fontSize: '11px', borderRight: '1px solid black' }}>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Count</Table.HeaderCell>
+                <Table.HeaderCell>Amount</Table.HeaderCell>
+                <Table.HeaderCell>Total</Table.HeaderCell>
+                <Table.HeaderCell>Price</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
 
-          <Table.Body>
-            {data
-              .map((i, idx) => {
-                const item = this.props.data[i]
+            <Table.Body>
+              {bids.map(([key, val], idx) => {
                 return (
-                  <Table.Row key={i}>
-                    <Table.Cell>{item[0]}</Table.Cell>
-                    <Table.Cell>{item[1]}</Table.Cell>
+                  <Table.Row key={key}>
+                    <Table.Cell>{val[0]}</Table.Cell>
+                    <Table.Cell>{val[1].toFixed(2)}</Table.Cell>
                     <Table.Cell>
-                      {Number(data[idx]).toLocaleString(undefined, { minimumFractionDigits: 1 })}
+                      {bids.reduce((acc, cur, curIdx) => {
+                        if (idx >= curIdx) {
+                          return acc + cur[1][1]
+                        }
+                        return acc
+                      }, 0).toFixed(2)}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {key.toLocaleString(undefined, { minimumFractionDigits: 1 })}
                     </Table.Cell>
                   </Table.Row>
                 )
               })}
-          </Table.Body>
-        </Table>
+            </Table.Body>
+          </Table>
+
+          <Table celled inverted compact="very" style={{ fontSize: '11px', marginTop: 0 }}>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Price</Table.HeaderCell>
+                <Table.HeaderCell>Total</Table.HeaderCell>
+                <Table.HeaderCell>Amount</Table.HeaderCell>
+                <Table.HeaderCell>Count</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+
+            <Table.Body>
+              {asks.map(([key, val], idx) => {
+                return (
+                  <Table.Row key={key}>
+                    <Table.Cell>
+                      {key.toLocaleString(undefined, { minimumFractionDigits: 1 })}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {asks.reduce((acc, cur, curIdx) => {
+                        if (idx >= curIdx) {
+                          return acc + Math.abs(cur[1][1])
+                        }
+                        return acc
+                      }, 0).toFixed(2)}
+                    </Table.Cell>
+                    <Table.Cell>{Math.abs(val[1]).toFixed(2)}</Table.Cell>
+                    <Table.Cell>{val[0]}</Table.Cell>
+                  </Table.Row>
+                )
+              })}
+            </Table.Body>
+          </Table>
+        </div>
       </div>
     )
   }
 }
 
-const mapState = state => ({
-  open: state.open,
-  data: state.data[state.channels.book],
-  precision: state.precision,
-  channelId: state.channels.book,
-})
+const mapState = state => {
+  const channel = state.data[state.channels.book]
+  return {
+    open: state.open,
+    bids: channel && channel.bids,
+    asks: channel && channel.asks,
+    precision: state.precision,
+    channelId: state.channels.book,
+  }
+}
 
 const mapDispatch = dispatch => ({
   subscribeBooks: prec => dispatch(subscribeBooks(prec)),
